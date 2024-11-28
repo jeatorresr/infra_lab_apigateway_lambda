@@ -41,6 +41,13 @@ Before setting up this project, ensure you have the following:
 - An **`AWS Account`** with permissions to use **`IAM`**, **`Lambda`**, **`API Gateway`**, and **`CloudWatch`**.
 - **`AWS CLI`** installed and configured.
 
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/jeatorresr/infra_lab_apigateway_lambda.git
+```
+
 ## Configuration :wrench:
 
 ### 1. Set up AWS Credentials
@@ -128,7 +135,12 @@ aws cloudformation delete-stack --stack-name S3BucketStack
 
 ## Contributing
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/your-repo/issues).
+
+1. Fork the project.
+2. Create a new branch (git checkout -b feature-branch).
+3. Make your changes and commit them (git commit -am 'Add new feature').
+4. Push to the branch (git push origin feature-branch).
+5. Open a Pull Request.
 
 
 ### Authors
