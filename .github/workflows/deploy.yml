@@ -44,7 +44,7 @@ jobs:
 
       - name: Upload Lambda code to S3
         run: |
-             aws s3 cp src/function.zip s3://lambda-code-bucket-exercise/lambda/example.zip
+             aws s3 cp s3_example_file/example.zip s3://lambda-code-bucket-exercise/lambda/example.zip
 
       - name: Deploy CloudFormation Stack - Lambda - API Gateway
         run: |
