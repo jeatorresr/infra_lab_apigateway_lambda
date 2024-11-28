@@ -49,6 +49,6 @@ jobs:
       - name: Deploy CloudFormation Stack - Lambda - API Gateway
         run: |
              aws cloudformation deploy \
-                --template-file lambda-template.yml \
+                --template-file lambda_template.yml \
                 --stack-name ApplicationStack \
                 --capabilities CAPABILITY_IAM
