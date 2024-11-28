@@ -134,8 +134,7 @@ aws cloudformation delete-stack --stack-name ApplicationStack
 aws cloudformation delete-stack --stack-name S3BucketStack
 ```
 
-## Contributing
-
+## Contribution
 
 1. Fork the project.
 2. Create a new branch (git checkout -b feature-branch).
