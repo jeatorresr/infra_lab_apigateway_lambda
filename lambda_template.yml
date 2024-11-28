@@ -1,0 +1,146 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Action: 'sts:AssumeRole'
+            Principal:
+              Service: 'lambda.amazonaws.com'
+      Policies:
+        - PolicyName: 'LambdaS3Policy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 's3:GetObject'
+                Resource: arn:aws:s3:::!ImportValue S3BucketStack-BucketName/*
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: arn:aws:logs:*:*:*
+
+  LambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'application-function'
+      Handler: 'app.lambda_handler' 
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: 'python3.13'
+      Code:
+        S3Bucket: !ImportValue S3BucketStack-BucketName
+        S3Key: 'lambda/example.zip'
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !ImportValue S3BucketStack-BucketName
+
+  LambdaFunctionConvert:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'convert-function'
+      Handler: 'convert.lambda_handler' 
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: 'python3.13' 
+      Code:
+        S3Bucket: !ImportValue S3BucketStack-BucketName
+        S3Key: 'lambda/example.zip'
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !ImportValue S3BucketStack-BucketName
+
+  ApiGateway:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: 'api-exercise'
+      Description: 'API to expose the Lambda'
+      
+  ApiGatewayResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      RestApiId: !Ref ApiGateway
+      PathPart: 'healthcheck'
+  
+  ApiGatewayResourcePost:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      RestApiId: !Ref ApiGateway
+      PathPart: 'convert'
+
+  # Crear el método en la API Gateway
+  ApiGatewayMethod:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: 'NONE'
+      HttpMethod: 'GET'
+      ResourceId: !Ref ApiGatewayResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationHttpMethod: 'POST'
+        Type: 'AWS_PROXY'
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}/invocations'
+
+  ApiGatewayMethodPost:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: 'NONE'
+      HttpMethod: 'POST'
+      ResourceId: !Ref ApiGatewayResourcePost
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationHttpMethod: 'POST'
+        Type: 'AWS_PROXY'
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunctionConvert.Arn}/invocations'
+
+  # Crear permisos para que API Gateway pueda invocar Lambda
+  LambdaApiGatewayInvokePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref LambdaFunction
+      Principal: 'apigateway.amazonaws.com'
+  
+  LambdaApiGatewayInvokePermissionPost:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref LambdaFunctionConvert
+      Principal: 'apigateway.amazonaws.com'
+
+  ApiGatewayLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/apigateway/api-exercise'
+      RetentionInDays: 14
+
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: 'arn:aws:iam::337918032209:role/ApiGatewayLoggingRole'
+  
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ApiGatewayMethod
+      - ApiGatewayMethodPost
+    Properties:
+      RestApiId: !Ref ApiGateway
+      StageName: prod
+
+  ApiGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: prod
+      DeploymentId: !Ref ApiDeployment
+      RestApiId: !Ref ApiGateway
+      AccessLogSetting:
+        DestinationArn: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/apigateway/api-exercise"
+        Format: |
+          { "requestId": "$context.requestId", "ip": "$context.identity.sourceIp", "caller": "$context.identity.caller", "user": "$context.identity.user", "requestTime": "$context.requestTime", "httpMethod": "$context.httpMethod", "resourcePath": "$context.resourcePath", "status": "$context.status", "protocol": "$context.protocol", "responseLength": "$context.responseLength" }
