@@ -20,8 +20,8 @@ This project contains two AWS CloudFormation templates and a GitHub Action workf
   - [1. Modify the Workflow](#1-modify-the-workflow)
   - [2. Push Changes](#2-push-changes)
   - [3. Workflow Details](#3-workflow-details)
-- [Resources Created :rocket:](#resources-created-rocket)
-- [Cleanup :wastebasket:](#cleanup-wastebasket)
+- [Resources Created](#resources-created-rocket)
+- [Cleanup](#cleanup-wastebasket)
 - [Contribution](#contribution)
 - [Authors](#authors)
 
