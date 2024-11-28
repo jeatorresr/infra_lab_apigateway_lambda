@@ -53,6 +53,7 @@ Resources:
       Environment:
         Variables:
           S3_BUCKET_NAME: !ImportValue S3BucketStack-BucketName
+          API_KEY: 'API KEY VALUE'
 
   ApiGateway:
     Type: 'AWS::ApiGateway::RestApi'
