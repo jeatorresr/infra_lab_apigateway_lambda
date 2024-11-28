@@ -47,6 +47,7 @@ Before setting up this project, ensure you have the following:
 ```bash
 git clone https://github.com/jeatorresr/infra_lab_apigateway_lambda.git
 ```
+2. Create your own repository, copy the files and commit the new changes to deploy the infrastructure.
 
 ## Configuration :wrench:
 
